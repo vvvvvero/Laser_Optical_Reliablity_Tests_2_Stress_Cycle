@@ -1,14 +1,19 @@
 ﻿"""Core stress-measurement cycling engine."""
 
 import csv
+import json
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Callable, List, Optional, Tuple
 
 import numpy as np
 
+from .b1500_controller import B1500Controller
 from .models import CycleConfig, CycleSummary, MeasurementPoint, StressPoint, TestPhase
+from .thorlabs_power_meter import ThorlabsPowerMeterController
+
+
 class StressMeasurementEngine:
     """Engine for running stress-measurement cycling tests"""
     
@@ -66,7 +71,7 @@ class StressMeasurementEngine:
         # Configure power meter
         if self.power_meter.connected and self.config.enable_power_meter:
             self.power_meter.configure(wavelength_nm=self.config.power_wavelength_nm)
-            self.log(f"Power meter configured: Î»={self.config.power_wavelength_nm}nm")
+            self.log(f"Power meter configured: lambda={self.config.power_wavelength_nm}nm")
         
         # Configure B1500
         if self.b1500.connected:
@@ -128,6 +133,7 @@ class StressMeasurementEngine:
             
             # Save final summary
             self._save_summary()
+            self._save_session_manifest()
             
             self.set_phase(TestPhase.COMPLETED if not self.stop_requested else TestPhase.STOPPED)
             self.log(f"\nTest complete. {len(self.measurement_data)} measurement points, "
@@ -289,7 +295,7 @@ class StressMeasurementEngine:
         peak_current = max(currents) if currents else 0.0
         peak_power = max(powers) if powers else 0.0
         
-        # Estimate threshold voltage (where current > 1ÂµA)
+        # Estimate threshold voltage (where current > 1e-6 A)
         threshold_v = 0.0
         for v, i in zip(voltages, currents):
             if abs(i) > 1e-6:
@@ -328,6 +334,10 @@ class StressMeasurementEngine:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         self.session_folder = base_path / f"{self.config.device_name}_stress_test_{timestamp}"
         self.session_folder.mkdir(parents=True, exist_ok=True)
+
+        if not self.config.session_id:
+            self.config.session_id = self.session_folder.name
+
         self.log(f"Session folder: {self.session_folder}")
     
     def _save_measurement_cycle(self, data: List[MeasurementPoint]):
@@ -399,6 +409,46 @@ class StressMeasurementEngine:
                 ])
         
         self.log(f"Summary saved to: {filepath}")
+
+    def _save_session_manifest(self):
+        """Write a compact run manifest aligned to the series V1 schema."""
+        if not self.session_folder:
+            return
+
+        manifest = {
+            "project_id": self.config.project_id,
+            "wafer_id": self.config.wafer_id,
+            "device_id": self.config.device_id or self.config.device_name,
+            "session_id": self.config.session_id,
+            "parent_session_id": self.config.parent_session_id,
+            "protocol_name": self.config.protocol_name,
+            "protocol_version": self.config.protocol_version,
+            "schema_version": self.config.schema_version,
+            "operator": self.config.operator,
+            "timestamp_start_utc": datetime.fromtimestamp(
+                self.measurement_data[0].timestamp if self.measurement_data else time.time()
+            , UTC).isoformat().replace("+00:00", "Z"),
+            "timestamp_end_utc": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+            "num_cycles": self.config.num_cycles,
+            "initial_measurement": self.config.initial_measurement,
+            "stress_mode": self.config.stress.mode,
+            "stress_value": self.config.stress.value,
+            "stress_duration_s": self.config.stress.duration_s,
+            "sample_interval_s": self.config.stress.sample_interval_s,
+            "measurement_points": len(self.measurement_data),
+            "stress_points": len(self.stress_data),
+            "output_files": {
+                "summary": "cycle_summary.csv",
+                "measurement_glob": "measurement_cycle_*.csv",
+                "stress_glob": "stress_cycle_*.csv",
+            },
+        }
+
+        filepath = self.session_folder / "session_manifest.json"
+        with open(filepath, "w", encoding="utf-8") as handle:
+            json.dump(manifest, handle, indent=2)
+
+        self.log(f"Session manifest saved to: {filepath}")
     
     def stop(self):
         """Request stop of test"""

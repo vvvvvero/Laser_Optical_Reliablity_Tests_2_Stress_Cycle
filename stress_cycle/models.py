@@ -3,6 +3,8 @@
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import List
+
+
 class TestPhase(Enum):
     IDLE = "idle"
     MEASUREMENT = "measurement"
@@ -63,6 +65,17 @@ class CycleConfig:
     output_folder: str = "results"
     device_name: str = "Device_001"
     autosave: bool = True
+
+    # Series metadata (VGZ-VRLS schema alignment)
+    project_id: str = "VGZ-VRLS"
+    wafer_id: str = ""
+    device_id: str = "Device_001"
+    session_id: str = ""
+    parent_session_id: str = ""
+    operator: str = ""
+    protocol_name: str = "stress_cycle"
+    protocol_version: str = "1.0.0"
+    schema_version: str = "series-v1"
 
 
 @dataclass

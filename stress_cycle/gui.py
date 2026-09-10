@@ -3,6 +3,7 @@
 import time
 from datetime import datetime
 from pathlib import Path
+from typing import List
 
 import numpy as np
 import matplotlib
@@ -38,9 +39,18 @@ from PyQt5.QtWidgets import (
 
 from .b1500_controller import B1500Controller
 from .measurement_engine import StressMeasurementEngine
-from .models import CycleConfig, StressConfig, SweepConfig, TestPhase
+from .models import (
+    CycleConfig,
+    MeasurementPoint,
+    StressConfig,
+    StressPoint,
+    SweepConfig,
+    TestPhase,
+)
 from .thorlabs_power_meter import ThorlabsPowerMeterController
 from .worker_thread import ResourceRefreshWorker, TestWorker
+
+
 class StressMeasurementCycleGUI(QMainWindow):
     """Main GUI for stress-measurement cycling tests"""
     

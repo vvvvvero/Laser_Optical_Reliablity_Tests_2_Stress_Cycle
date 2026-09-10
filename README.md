@@ -92,6 +92,28 @@ Per run, results are written into a timestamped session folder and include:
 - measurement_cycle_XXX.csv
 - stress_cycle_XXX.csv
 - cycle_summary.csv
+- session_manifest.json
+
+## Running the tests
+
+```bash
+pip install -e .
+pip install pytest
+pytest tests/
+```
+
+## Citation
+
+If you use this library in research, please cite:
+
+```text
+GaoZhan, V. (2026). Stress Measurement Cycle Library.
+Retrieved from https://github.com/vvvvvero/Laser_Optical_Reliablity_Tests_2_Stress_Cycle
+```
+
+## Support
+
+For issues, questions, or suggestions, please open an issue on GitHub.
 
 ## License
 
