@@ -48,7 +48,13 @@ A modular Python library for cyclic reliability tests using B1500 and Thorlabs p
 stress_cycle_measurement_lib/
 ├── stress_cycle/
 │   ├── __init__.py
-│   ├── app.py
+│   ├── models.py
+│   ├── b1500_controller.py
+│   ├── thorlabs_power_meter.py
+│   ├── measurement_engine.py
+│   ├── worker_thread.py
+│   ├── gui.py
+│   ├── app.py                    # Legacy compatibility re-exports
 │   └── main.py
 ├── examples/
 │   └── basic_usage.py

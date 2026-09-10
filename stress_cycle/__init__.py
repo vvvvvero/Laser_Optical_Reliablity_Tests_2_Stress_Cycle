@@ -1,10 +1,6 @@
-"""
-Stress Cycle Measurement Library
+"""Stress cycle package public API."""
 
-Modular package wrapper for B1500 + power meter stress-measurement cycling.
-"""
-
-from .app import (
+from .models import (
     TestPhase,
     SweepConfig,
     StressConfig,
@@ -12,12 +8,13 @@ from .app import (
     MeasurementPoint,
     StressPoint,
     CycleSummary,
-    B1500Controller,
-    ThorlabsPowerMeterController,
-    StressMeasurementEngine,
-    StressMeasurementCycleGUI,
-    main,
 )
+from .b1500_controller import B1500Controller
+from .thorlabs_power_meter import ThorlabsPowerMeterController
+from .measurement_engine import StressMeasurementEngine
+from .worker_thread import TestWorker, ResourceRefreshWorker
+from .gui import StressMeasurementCycleGUI
+from .main import main
 
 __version__ = "1.0.0"
 __author__ = "Veronica GaoZhan"
@@ -33,6 +30,8 @@ __all__ = [
     "B1500Controller",
     "ThorlabsPowerMeterController",
     "StressMeasurementEngine",
+    "TestWorker",
+    "ResourceRefreshWorker",
     "StressMeasurementCycleGUI",
     "main",
 ]
